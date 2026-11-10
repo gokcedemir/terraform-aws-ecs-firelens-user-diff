@@ -31,7 +31,45 @@ No changes. Your infrastructure matches the configuration.
 
 ### Actual
 
-<!-- paste the plan output here -->
+Right after `terraform apply`, with no changes to the configuration
+(Terraform 1.9.5, AWS provider 6.72.0):
+
+```
+  # aws_ecs_task_definition.repro must be replaced
+-/+ resource "aws_ecs_task_definition" "repro" {
+      ~ container_definitions    = jsonencode(
+          ~ [
+              ~ {
+                  - environment      = []
+                  - mountPoints      = []
+                    name             = "app"
+                  - portMappings     = []
+                  - systemControls   = []
+                  - volumesFrom      = []
+                    # (3 unchanged attributes hidden)
+                },
+              ~ {
+                  - environment           = []
+                  - mountPoints           = []
+                    name                  = "log_router"
+                  - portMappings          = []
+                  - systemControls        = []
+                  - user                  = "0"
+                  - volumesFrom           = []
+                    # (3 unchanged attributes hidden)
+                },
+            ] # forces replacement
+        )
+        ...
+    }
+
+Plan: 1 to add, 0 to change, 1 to destroy.
+```
+
+The empty lists (`environment = []` and so on) are only shown as context. The
+provider already treats them as equal to unset. `user = "0"` is the only real
+difference: with `user = "0"` added to the `log_router` container, the same
+`terraform plan` reports `No changes`.
 
 ### What ECS stored
 
@@ -40,7 +78,13 @@ aws ecs describe-task-definition --task-definition tf-firelens-user-repro \
   --query 'taskDefinition.containerDefinitions[?name==`log_router`].user'
 ```
 
-<!-- paste the output here -->
+```json
+[
+    "0"
+]
+```
+
+The configuration never sets `user`, so ECS added it.
 
 ## Workaround
 
