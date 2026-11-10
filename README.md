@@ -1,4 +1,4 @@
-# aws_ecs_task_definition: perpetual diff when a container uses FireLens without `user`
+# aws_ecs_task_definition: diff on every plan when a container uses FireLens without `user`
 
 Minimal reproduction for a `terraform-provider-aws` bug.
 
